@@ -1,12 +1,14 @@
 import connection from "../db/db.js";
+import bcrypt from 'bcrypt';
 
 async function singUp (req, res) {
     const { name, email, password } = req.body;
+    const passwordHash = bcrypt.hashSync(password, 12);
 
     try {
         await connection.query(
             'INSERT INTO users (name, email, password) VALUES ($1, $2, $3);',
-            [name, email, password]
+            [name, email, passwordHash]
         );
 
         return res.sendStatus(201);
