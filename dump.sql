@@ -14,5 +14,11 @@ CREATE TABLE urls(
     url TEXT NOT NULL,
     "shortUrl" TEXT NOT NULL,
     "visitCount" INTEGER NOT NULL DEFAULT 0,
-    "userId" INTEGER REFERENCES "users"("id")
+    "userId" INTEGER NOT NULL REFERENCES "users"("id")
+);
+
+CREATE TABLE sessions(
+    id SERIAL PRIMARY KEY,
+    "userId" INTEGER NOT NULL REFERENCES "users"("id"),
+    token TEXT NOT NULL
 );
