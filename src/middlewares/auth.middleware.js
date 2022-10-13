@@ -57,4 +57,22 @@ async function validateSignIn (req, res, next) {
     next();
 }
 
-export { validateSignUp, validateSignIn };
+async function validateToken (req, res, next) {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+
+    try {
+        const userId = (await connection.query(
+            'SELECT "userId" FROM sessions WHERE token = $1;',
+            [token]
+        )).rows[0].userId;
+        if (!userId) return res.sendStatus(401)
+
+        res.locals.userId = userId;
+
+        next();
+    } catch (error) {
+        return res.status(500).send(error);
+    }
+}
+
+export { validateSignUp, validateSignIn, validateToken };
