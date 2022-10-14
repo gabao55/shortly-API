@@ -1,6 +1,7 @@
 import Joi from 'joi';
 import connection from '../db/db.js';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
 const signUpSchema = Joi.object({
     name: Joi.string().required().min(1),
@@ -61,17 +62,13 @@ async function validateToken (req, res, next) {
     const token = req.headers.authorization?.replace('Bearer ', '');
 
     try {
-        const userId = (await connection.query(
-            'SELECT "userId" FROM sessions WHERE token = $1;',
-            [token]
-        )).rows[0].userId;
-        if (!userId) return res.sendStatus(401)
+        const decode = jwt.verify(token, process.env.TOKEN_SECRET);
 
-        res.locals.userId = userId;
+        res.locals.userId = decode.userId;
 
         next();
     } catch (error) {
-        return res.status(500).send(error);
+        return res.status(401).send(error);
     }
 }
 

@@ -1,6 +1,6 @@
 import connection from "../db/db.js";
 import bcrypt from 'bcrypt';
-import { v4 as uuid } from 'uuid';
+import jwt from 'jsonwebtoken';
 
 async function singUp (req, res) {
     const { name, email, password } = req.body;
@@ -20,13 +20,14 @@ async function singUp (req, res) {
 
 async function singIn (req, res) {
     const userId = res.locals.userId;
-    const token = uuid();
 
     try {
-        await connection.query(
-            'INSERT INTO sessions ("userId", token, "creationTimestamp") VALUES ($1, $2, to_timestamp($3 / 1000.0));',
-            [userId, token, Date.now()]
-        );
+        const token = jwt.sign({
+            userId,
+        }, process.env.TOKEN_SECRET,
+        {
+            expiresIn: "2h"
+        });
 
         return res.status(200).send({ token });
     } catch (error) {
@@ -34,21 +35,4 @@ async function singIn (req, res) {
     }
 }
 
-async function cleanSessions() {
-    const now = Date.now();
-    const MILISECONDS = 1000;
-    const SECONDS = 60;
-    const MINUTES = 60;
-    const TWO_HOURS = 2 * MINUTES * SECONDS * MILISECONDS;
-    try {
-        connection.query(
-            'DELETE FROM sessions WHERE "creationTimestamp" < to_timestamp($1 / 1000.0);',
-            [now - TWO_HOURS]
-        );
-    } catch (error) {
-        console.log(error);
-    }
-
-}
-
-export { singUp, singIn, cleanSessions };
+export { singUp, singIn };
