@@ -1,7 +1,7 @@
 import Joi from 'joi';
-import connection from '../db/db.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { getUserByEmail } from '../repositories/auth.repository.js';
 
 const signUpSchema = Joi.object({
     name: Joi.string().required().min(1),
@@ -23,10 +23,7 @@ async function validateSignUp (req, res, next) {
     }
 
     const { email } = req.body;
-    const userExists = await connection.query(
-        'SELECT * FROM users WHERE email = $1;', 
-        [email]
-    );
+    const userExists = await getUserByEmail(email);
     if (userExists.rowCount) return res.status(409).send('Email already registered');
 
     next();
@@ -40,10 +37,7 @@ async function validateSignIn (req, res, next) {
     }
 
     const { email, password } = req.body;
-    const user = (await connection.query(
-        "SELECT * FROM users WHERE email = $1;",
-        [email]
-    ));
+    const user = await getUserByEmail(email);
 
     if (!user.rowCount) return res.status(401).send('Email or password invalid');
     const passwordHash = user.rows[0].password;
